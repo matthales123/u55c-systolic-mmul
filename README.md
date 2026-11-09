@@ -21,21 +21,25 @@ source-export packaging change has been rerun on hardware.
 
 ## Run source verification
 
-Clone `fpga-verification-tools` beside this repository. Install the pinned formal
-tools with its bootstrap command and load Vivado 2025.1 for XSim/UVM:
+Load Vivado 2025.1 for XSim/UVM, then run the project-local drivers directly.
+These simulation commands do not require access to the private shared tooling:
 
 ```bash
-python3 ../fpga-verification-tools/verification/bootstrap_formal.py --help
-make verification_doctor
-make verify SEEDS=381,7331
-# Individual stages:
-make verify_uvm SEEDS=381,7331
-make verify_axi
-make verify_formal
+python3 verification/uvm/run.py --output-dir results/uvm-381 --seed 381
+python3 verification/uvm/run.py --output-dir results/uvm-7331 --seed 7331
+python3 verification/hardware/kernel/simulate.py --output-dir results/axi
 ```
 
-Set `FPGA_FLOW` in Make and `FPGA_TOOLS_ROOT` in the environment if the shared
-tools are checked out elsewhere. New results are generated locally.
+Use fresh output directories for each run. Results are generated locally and are
+excluded from this repository.
+
+The formal harnesses and project-specific formal driver are included as source.
+The integrated `make verify`, `make verify_formal`, and `make verification_doctor`
+commands additionally require the private `fpga-verification-tools` checkout and
+its pinned formal-tool installation. With authorized access, clone it beside this
+repository and use `FPGA_FLOW` / `FPGA_TOOLS_ROOT` for another location. The
+historical formal results above do not imply that this public checkout includes
+that private orchestration/tool-installation layer.
 
 ## Build and run hardware
 
