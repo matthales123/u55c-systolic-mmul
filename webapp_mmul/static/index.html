@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Systolic-Array Matrix Multiplication Tool</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="shortcut icon" href="/static/favicon.svg" />
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <header class="topbar">
+    <div class="topbar-main">
+      <div class="brand-wrap">
+        <div class="brand">Systolic-Array Matrix Multiplication Tool</div>
+        <div class="subtitle">Interactive Matrix Compute, Documentation, and Architecture Explorer</div>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button">Dark Mode</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="matrix">Matrix Lab</button>
+    <button class="tab" data-tab="fpga">FPGA Runtime</button>
+    <button class="tab" data-tab="docs">Project Docs</button>
+    <button class="tab" data-tab="diagram">Block Diagram</button>
+  </nav>
+
+  <div id="startup-alert" class="startup-alert hidden" aria-live="polite"></div>
+
+  <main>
+    <section id="tab-matrix" class="tab-panel active">
+      <div class="grid two-col">
+        <article class="card">
+          <h2>Matrix Workspace</h2>
+          <div class="controls">
+            <label>A Rows (M)
+              <input id="dim-input" type="number" min="1" max="1024" value="4" />
+            </label>
+            <label>Shared Dim (K)
+              <input id="k-input" type="number" min="1" max="1024" value="4" />
+            </label>
+            <label>B Cols (N)
+              <input id="n-input" type="number" min="1" max="1024" value="4" />
+            </label>
+            <label>Random Min
+              <input id="rand-min" type="number" value="-1000" />
+            </label>
+            <label>Random Max
+              <input id="rand-max" type="number" value="1000" />
+            </label>
+            <label>Seed
+              <input id="rand-seed" type="number" placeholder="optional" />
+            </label>
+            <label>Script N Override
+              <input id="script-dim-override" type="number" min="1" max="10000" placeholder="optional (up to 10000)" />
+            </label>
+          </div>
+          <div class="actions-row">
+            <button id="init-matrices-btn" class="btn">Initialize Empty</button>
+            <button id="random-matrices-btn" class="btn primary">Generate Random</button>
+            <button id="script-random-matrices-btn" class="btn">Generate via Python Script</button>
+            <button id="upload-matrices-btn" class="btn">Upload Matrices</button>
+          </div>
+
+          <div id="matrix-size-hint" class="hint matrix-size-hint"></div>
+
+          <div class="matrix-layout" id="matrix-layout">
+            <div class="matrix-panel">
+              <div class="matrix-panel-head">
+                <h3>Matrix A</h3>
+                <div class="actions-row compact">
+                  <button id="edit-a-btn" class="btn">Open Editor</button>
+                  <button id="random-a-btn" class="btn">Random A</button>
+                  <button id="empty-a-btn" class="btn">Zero A</button>
+                </div>
+              </div>
+              <div id="matrix-a-wrap" class="matrix-wrap"></div>
+            </div>
+
+            <div class="matrix-panel">
+              <div class="matrix-panel-head">
+                <h3>Matrix B</h3>
+                <div class="actions-row compact">
+                  <button id="edit-b-btn" class="btn">Open Editor</button>
+                  <button id="random-b-btn" class="btn">Random B</button>
+                  <button id="empty-b-btn" class="btn">Zero B</button>
+                </div>
+              </div>
+              <div id="matrix-b-wrap" class="matrix-wrap"></div>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button id="compute-btn" class="btn accent">CPU Compute</button>
+            <button id="fpga-compute-btn" class="btn primary">FPGA Compute</button>
+            <button id="compute-both-btn" class="btn warning">Compute Both</button>
+            <span id="compute-run-status" class="compute-run-status idle" aria-live="polite">Ready</span>
+          </div>
+
+          <div class="matrix-result">
+            <h3>Result Matrix C</h3>
+            <div id="matrix-c-wrap" class="matrix-wrap readonly"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>CPU Trace + Performance Comparison</h2>
+          <p class="hint">Use Matrix Lab for CPU result/trace. Run FPGA benchmark in the FPGA Runtime tab, then compare speedup here.</p>
+          <div class="controls stack">
+            <label>Trace Cell (row,col)
+              <div class="inline-fields">
+                <input id="trace-row" type="number" min="0" value="0" />
+                <input id="trace-col" type="number" min="0" value="0" />
+              </div>
+            </label>
+            <div class="actions-row">
+              <button id="trace-btn" class="btn">Trace Dot Product</button>
+            </div>
+            <pre id="trace-output" class="output small"></pre>
+          </div>
+
+          <div class="metrics">
+            <div class="metric"><span>CPU Compute</span><strong id="cpu-ms">-</strong></div>
+            <div class="metric"><span>CPU GFLOP/s</span><strong id="cpu-gflops">-</strong></div>
+            <div class="metric"><span>FPGA Kernel</span><strong id="fpga-kernel-ms">-</strong></div>
+            <div class="metric"><span>FPGA Total</span><strong id="fpga-total-ms">-</strong></div>
+            <div class="metric"><span>Throughput</span><strong id="fpga-gbps">-</strong></div>
+            <div class="metric"><span>Kernel Speedup</span><strong id="speedup-kernel">-</strong></div>
+            <div class="metric"><span>End-to-End Speedup</span><strong id="speedup-total">-</strong></div>
+          </div>
+
+          <h3>Detailed CPU vs FPGA Comparison</h3>
+          <div id="speedup-detail" class="speedup-detail">Run CPU compute and FPGA benchmark to generate a detailed speedup breakdown.</div>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-fpga" class="tab-panel">
+      <div class="grid two-col">
+        <article class="card">
+          <h2>FPGA Control + Benchmark</h2>
+          <div class="controls stack">
+            <label>Device
+              <input id="fpga-device" type="text" value="0000:04:00.1" />
+            </label>
+            <label>xclbin Path
+              <input id="xclbin-path" type="text" placeholder="$HOME/Documents/.../mmul.xclbin" />
+            </label>
+            <div class="actions-row">
+              <button id="program-btn" class="btn warning">Program FPGA</button>
+              <button id="status-btn" class="btn">Refresh FPGA Status</button>
+            </div>
+
+            <hr />
+
+            <label>Benchmark Mode
+              <select id="bench-mode">
+                <option value="hw">hw</option>
+                <option value="dry-run">dry-run</option>
+              </select>
+            </label>
+            <label>Benchmark N Override
+              <input id="bench-dim" type="number" min="1" max="10000" placeholder="optional, uses workspace N if empty" />
+            </label>
+            <label>Iterations
+              <input id="bench-iterations" type="number" min="1" max="50" value="3" />
+            </label>
+            <div class="actions-row">
+              <button id="bench-btn" class="btn primary">Run FPGA Timing</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Runtime Output</h2>
+          <p class="hint">Program/benchmark logs and host diagnostics are appended here.</p>
+          <pre id="runtime-output" class="output"></pre>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-docs" class="tab-panel">
+      <div class="grid two-col docs-grid">
+        <article class="card docs-index-card">
+          <h2>Documentation Index</h2>
+          <label>Document
+            <select id="docs-select"></select>
+          </label>
+          <p class="hint">Document list and viewer update automatically.</p>
+          <p class="hint">This section should act as the project handbook for design intent, validation, and deployment.</p>
+          <div id="docs-meta" class="hint"></div>
+          <h3>Table of Contents</h3>
+          <div id="docs-toc" class="docs-toc"></div>
+        </article>
+
+        <article class="card docs-viewer-card">
+          <h2>Document Viewer</h2>
+          <div id="docs-render" class="docs-render"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-diagram" class="tab-panel">
+      <div class="grid two-col diagram-grid">
+        <article class="card">
+          <h2>Interactive Architecture Map</h2>
+          <p class="hint">Click a block to inspect it. Double-click blocks with subdiagrams to drill deeper. Drag to pan, scroll to zoom.</p>
+
+          <div class="diagram-toolbar">
+            <button id="diagram-back-btn" class="btn" type="button">Back</button>
+            <button id="diagram-zoom-out-btn" class="btn" type="button">-</button>
+            <button id="diagram-zoom-in-btn" class="btn" type="button">+</button>
+            <button id="diagram-reset-btn" class="btn" type="button">Reset View</button>
+            <span id="diagram-breadcrumb" class="diagram-breadcrumb"></span>
+            <span id="diagram-zoom-readout" class="diagram-zoom-readout">100%</span>
+          </div>
+
+          <div id="diagram-wrap" class="diagram-wrap">
+            <svg id="diagram-svg" viewBox="0 0 980 620" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Block Details</h2>
+          <div id="block-details" class="block-details">Click a block to see details.</div>
+          <h3>Flow Notes</h3>
+          <ul id="flow-notes" class="flow-notes"></ul>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div id="matrix-modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="modal-title">Matrix Editor</h2>
+        <button id="modal-close-btn" class="btn" type="button">Close</button>
+      </div>
+
+      <div class="actions-row">
+        <button id="modal-empty-btn" class="btn">Initialize Empty</button>
+        <button id="modal-random-btn" class="btn primary">Generate Random</button>
+        <button id="modal-apply-btn" class="btn accent">Apply Changes</button>
+      </div>
+
+      <div id="modal-meta" class="hint"></div>
+      <div id="modal-matrix-wrap" class="matrix-wrap modal-matrix-wrap"></div>
+    </div>
+  </div>
+
+  <div id="upload-modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card upload-modal-card">
+      <div class="modal-head">
+        <h2>Upload Matrices A and B</h2>
+        <button id="upload-modal-close-btn" class="btn" type="button">Close</button>
+      </div>
+
+      <div class="hint">Upload Matrix A (M x K) and Matrix B (K x N). Files can be CSV, TXT, or JSON, and must satisfy A.cols == B.rows.</div>
+
+      <div class="controls stack upload-controls">
+        <div class="actions-row">
+          <button id="upload-modal-pick-a-btn" class="btn" type="button">Choose Matrix A</button>
+          <span id="upload-modal-a-name" class="hint">No file selected</span>
+        </div>
+        <div class="actions-row">
+          <button id="upload-modal-pick-b-btn" class="btn" type="button">Choose Matrix B</button>
+          <span id="upload-modal-b-name" class="hint">No file selected</span>
+        </div>
+        <input id="upload-a-file" class="hidden-file" type="file" accept=".csv,.txt,.json" />
+        <input id="upload-b-file" class="hidden-file" type="file" accept=".csv,.txt,.json" />
+      </div>
+
+      <div class="actions-row">
+        <button id="upload-modal-apply-btn" class="btn primary" type="button">Load A and B</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

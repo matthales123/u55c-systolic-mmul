@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "name": "sysbase-verification-pilot",
+  "project_root": "..",
+  "shared_sources": [
+    "bootstrap_formal.py"
+  ],
+  "sources": [
+    "hardware/rtl/src/**/*.v",
+    "hardware/rtl/src/**/*.sv",
+    "hardware/rtl/baseline/SysBase.v.orig",
+    "verification/**/*.py",
+    "verification/**/*.sv",
+    "verification/hardware/kernel/*.xml",
+    "verification/hardware/kernel/*.json",
+    "verification/hardware/kernel/*.tcl",
+    "verification/hardware/host/*.cpp",
+    "verification/formal/fixtures/*.json",
+    "hardware/hls/scripts/u55c_clk_metadata_adapter_workaround.tcl",
+    "config/project.env"
+  ],
+  "integrity": [
+    {
+      "source": "hardware/rtl/src/cornell/systolic/SysBase.v",
+      "baseline": "hardware/rtl/baseline/SysBase.v.orig"
+    }
+  ],
+  "evidence_scope": {
+    "simulation": "mmul_sysbase_axis_shell with ARRAY_SIZE=4, MAX_DIM=8, 32-bit modular arithmetic; see UVM result for executed cases",
+    "formal": "Explicit per-property models, parameters, assumptions and proof depths in formal/result.json; no whole-device proof implied",
+    "hardware": "Requires a build record identifying the actual SysBase RTL kernel; the existing HLS mmul.xclbin is not eligible"
+  },
+  "profiles": {
+    "verify": [
+      "uvm",
+      "axi",
+      "formal"
+    ],
+    "uvm": [
+      "uvm"
+    ],
+    "formal": [
+      "formal"
+    ],
+    "axi": [
+      "axi"
+    ],
+    "hardware-check": [
+      "hardware-check"
+    ],
+    "release": [
+      "uvm",
+      "axi",
+      "formal",
+      "hardware"
+    ]
+  },
+  "stages": [
+    {
+      "id": "uvm",
+      "per_seed": true,
+      "timeout_seconds": 1800,
+      "command": [
+        "{python}",
+        "{project}/verification/uvm/run.py",
+        "--output-dir",
+        "{output}",
+        "--seed",
+        "{seed}"
+      ]
+    },
+    {
+      "id": "axi",
+      "timeout_seconds": 900,
+      "command": [
+        "{python}",
+        "{project}/verification/hardware/kernel/simulate.py",
+        "--output-dir",
+        "{output}"
+      ]
+    },
+    {
+      "id": "formal",
+      "timeout_seconds": 2400,
+      "command": [
+        "{python}",
+        "{project}/verification/formal/run.py",
+        "--output-dir",
+        "{output}",
+        "--seed",
+        "{seed}"
+      ]
+    },
+    {
+      "id": "hardware-check",
+      "accepts_provenance": true,
+      "timeout_seconds": 120,
+      "command": [
+        "{python}",
+        "{project}/verification/hardware/run.py",
+        "--output-dir",
+        "{output}",
+        "--seed",
+        "{seed}"
+      ]
+    },
+    {
+      "id": "hardware",
+      "accepts_provenance": true,
+      "hardware_execution": true,
+      "timeout_seconds": 900,
+      "command": [
+        "{python}",
+        "{project}/verification/hardware/run.py",
+        "--output-dir",
+        "{output}",
+        "--seed",
+        "{seed}"
+      ]
+    }
+  ]
+}

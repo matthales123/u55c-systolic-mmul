@@ -1,0 +1,6 @@
+{
+  "source": "verification/hardware/results/build_sysbase_150mhz_v3/source_snapshot/verification/hardware/kernel/mmul_sysbase.sv",
+  "sha256": "2fafe928e9afe1cc82dec27a8af847f582c5eb492e61393fa7d0885398d8e293",
+  "reason": "Unmodified v3 wrapper uses combinational GIE & ISR interrupt; expected negative control for registered-source temporal contract. Does not simulate analog glitches.",
+  "scope": "Historical fixture only; never production build source."
+}

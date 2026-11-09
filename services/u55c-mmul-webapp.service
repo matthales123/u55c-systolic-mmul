@@ -1,0 +1,18 @@
+[Unit]
+Description=U55C MMUL Interactive Web App
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Documents/U55C/projects/u55c_systolic_mmul
+Environment=MMUL_WEB_PORT=9890
+Environment=MMUL_WEB_DEVICE=0
+Environment=MMUL_WEB_REQUIRE_FLASHED_XCLBIN=1
+ExecStart=%h/Documents/U55C/projects/u55c_systolic_mmul/scripts/run_webapp_mmul.sh
+Restart=on-failure
+RestartSec=3
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target

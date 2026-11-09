@@ -1,0 +1,5 @@
+{
+  "purpose": "Historical unmodified RTL with CSR response-overwrite defect; negative regression fixture only",
+  "source": "hardware/rtl/src/mmul_sysbase_xcel.sv",
+  "sha256": "1a0f3ea4ddf69bdc1bfe9c4cc6a772604aa3932707ca4a6b43c2c6e620e7a203"
+}
